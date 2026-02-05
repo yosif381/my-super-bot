@@ -11,6 +11,19 @@ import re
 import shutil
 import logging
 from concurrent.futures import ThreadPoolExecutor
+import http.server
+import socketserver
+import threading
+import os
+
+# كود وهمي لفتح منفذ وإرضاء سيرفر Render المجاني
+def start_server():
+    port = int(os.environ.get("PORT", 8080))
+    handler = http.server.SimpleHTTPRequestHandler
+    with socketserver.TCPServer(("", port), handler) as httpd:
+        httpd.serve_forever()
+
+threading.Thread(target=start_server, daemon=True).start()
 
 # ==========================================
 # ⚙️ الإعدادات المتقدمة (Config)
