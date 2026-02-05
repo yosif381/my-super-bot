@@ -31,7 +31,7 @@ threading.Thread(target=start_server, daemon=True).start()
 # ==========================
 # ⚙️ إعدادات البوت
 # ==========================
-TOKEN = "8298277087:AAF7Z6J24bIvFb1e_xpZvSuJm1mXhZocJzw"
+TOKEN = "8298277087:AAEv36igY-juy9TAIJHDvXwqx4k7pMF3qPM"
 VERIFICATION_CODE = "4415"
 QURAN_VIDEO_URL = "https://www.instagram.com/reel/DUX8YYuCurE/?igsh=MWdlOGh6Y3ppdWd1cQ=="
 
