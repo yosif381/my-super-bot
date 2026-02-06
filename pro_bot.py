@@ -13,31 +13,28 @@ import logging
 from concurrent.futures import ThreadPoolExecutor
 import http.server
 import socketserver
+import os
 from flask import Flask
 from threading import Thread
-
-#==========================================
-
-
-
-#==========================================
 
 app = Flask('')
 
 @app.route('/')
 def home():
-    return "<b>Telegram Bot is Running by Your Name! 🚀</b>"
+    return "<b>Status: Online 🚀</b>"
 
 def run():
-
-#Render يعطيك منفذ (Port) تلقائي، نستخدمه هنا
-
-    app.run(host='0.0.0.0', port=8080)
+    # Render يمرر البورت عبر متغير بيئة يسمى PORT
+    port = int(os.environ.get("PORT", 8080)) 
+    app.run(host='0.0.0.0', port=port)
 
 def keep_alive():
     t = Thread(target=run)
+    t.daemon = True
     t.start()
 
+# تشغيل السيرفر قبل أي شيء آخر
+keep_alive()
 #==========================================
 
 #🍪 منطقة الكوكيز (تم التصحيح لتعمل مع بايثون)
