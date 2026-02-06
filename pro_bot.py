@@ -16,33 +16,33 @@ import socketserver
 from flask import Flask
 from threading import Thread
 
-==========================================
+#==========================================
 
-🌐 سيرفر Flask المتطور (لإبقاء البوت حياً)
 
-==========================================
+
+#==========================================
 
 app = Flask('')
 
 @app.route('/')
 def home():
-return "<b>Telegram Bot is Running by Your Name! 🚀</b>"
+    return "<b>Telegram Bot is Running by Your Name! 🚀</b>"
 
 def run():
 
-Render يعطيك منفذ (Port) تلقائي، نستخدمه هنا
+#Render يعطيك منفذ (Port) تلقائي، نستخدمه هنا
 
-app.run(host='0.0.0.0', port=8080)
+    app.run(host='0.0.0.0', port=8080)
 
 def keep_alive():
-t = Thread(target=run)
-t.start()
+    t = Thread(target=run)
+    t.start()
 
-==========================================
+#==========================================
 
-🍪 منطقة الكوكيز (تم التصحيح لتعمل مع بايثون)
+#🍪 منطقة الكوكيز (تم التصحيح لتعمل مع بايثون)
 
-==========================================
+#==========================================
 
 COOKIES_DATA = [
 {
@@ -179,49 +179,49 @@ print("✅ تم إعداد ملف الكوكيز (cookies.txt) بنجاح!")
 except Exception as e:
 print(f"❌ خطأ في إنشاء ملف الكوكيز: {e}")
 
-تشغيل إعداد الكوكيز فوراً عند بدء البوت
+#تشغيل إعداد الكوكيز فوراً عند بدء البوت
 
 setup_cookies_file()
 
-كود وهمي لفتح منفذ وإرضاء سيرفر Render المجاني
+#كود وهمي لفتح منفذ وإرضاء سيرفر Render المجاني
 
-==========================================
+#==========================================
 
-⚙️ الإعدادات المتقدمة (Config)
+#⚙️ الإعدادات المتقدمة (Config)
 
-==========================================
+#==========================================
 
 TOKEN = "8298277087:AAEv36igY-juy9TAIJHDvXwqx4k7pMF3qPM"
 VERIFICATION_CODE = "4415"
 QURAN_VIDEO_URL = "https://www.instagram.com/reel/DUYAQBaihUg/?igsh=Y2dhNDNuMGRiYWp3"
 
-تحسين أداء الشبكة للنت الضعيف جداً
+#تحسين أداء الشبكة للنت الضعيف جداً
 
 apihelper.CONNECT_TIMEOUT = 1000
 apihelper.READ_TIMEOUT = 1000
 apihelper.RETRY_ON_ERROR = True
 
-المجلدات وقواعد البيانات
+#المجلدات وقواعد البيانات
 
 BASE_DIR = "downloads"
 DB_FILE = "system_db.json"
 LOG_FILE = "bot_log.txt"
 os.makedirs(BASE_DIR, exist_ok=True)
 
-نظام تسجيل الأخطاء
+#نظام تسجيل الأخطاء
 
 logging.basicConfig(filename=LOG_FILE, level=logging.INFO, format='%(asctime)s - %(message)s')
 
-تهيئة البوت مع نظام خيوط المعالجة
+#تهيئة البوت مع نظام خيوط المعالجة
 
 bot = telebot.TeleBot(TOKEN, threaded=True, num_threads=40)
 executor = ThreadPoolExecutor(max_workers=20)
 
-==========================================
+#==========================================
 
-📊 نظام إدارة البيانات
+#📊 نظام إدارة البيانات
 
-==========================================
+#==========================================
 
 class Database:
 @staticmethod
@@ -250,11 +250,11 @@ if str(user_id) not in data["verified"]:
 data["verified"].append(str(user_id))
 Database.save(data)
 
-==========================================
+#==========================================
 
-🛡️ الحماية وعزل المستخدمين
+#🛡️ الحماية وعزل المستخدمين
 
-==========================================
+#==========================================
 
 def is_owner(call, owner_id):
 if call.from_user.id != int(owner_id):
@@ -262,11 +262,11 @@ bot.answer_callback_query(call.id, "⚠️ عذراً! هذا الطلب يخص 
 return False
 return True
 
-==========================================
+#==========================================
 
-🚀 محرك التحميل الذكي
+#🚀 محرك التحميل الذكي
 
-==========================================
+#==========================================
 
 class SmartDownloader:
 def init(self, chat_id, message_id, user_id):
@@ -363,11 +363,11 @@ try:
 except Exception as e:    
     return str(e)
 
-==========================================
+#==========================================
 
-🔍 محرك البحث عبر الإنترنت
+#🔍 محرك البحث عبر الإنترنت
 
-==========================================
+#==========================================
 
 class InternetSearch:
 @staticmethod
@@ -396,11 +396,11 @@ except:
 pass
 return results
 
-==========================================
+#==========================================
 
-🤖 معالجة الأوامر والرسائل
+#🤖 معالجة الأوامر والرسائل
 
-==========================================
+#==========================================
 
 @bot.message_handler(commands=['start'])
 def welcome(message):
@@ -412,11 +412,11 @@ text = (
 )
 bot.send_message(message.chat.id, text)
 
-==========================================
+#==========================================
 
-🔎 أمر البحث عن الفيديوهات
+#🔎 أمر البحث عن الفيديوهات
 
-==========================================
+#==========================================
 
 @bot.message_handler(commands=['search'])
 def search_command(message):
@@ -469,7 +469,7 @@ def handle_links(message):
 user_id = message.from_user.id
 url = re.search(r'(https?://\S+)', message.text).group(1)
 
-التحقق من الأمان
+#التحقق من الأمان
 
 if not Database.is_verified(user_id):
 markup = types.InlineKeyboardMarkup()
@@ -478,18 +478,18 @@ markup.add(types.InlineKeyboardButton("🔑 إدخال الكود", callback_dat
 bot.reply_to(message, "⛔ وصول محدود!\nيجب عليك مشاهدة فيديو القرآن واستخراج الكود المائي منه أولاً.", reply_markup=markup)
 return
 
-فحص إذا كان هناك تحميل سابق (Resume Logic)
+#فحص إذا كان هناك تحميل سابق (Resume Logic)
 
 url_hash = hashlib.md5(url.encode()).hexdigest()[:10]
 file_id = f"{user_id}_{url_hash}"
 
-تخزين مؤقت للمهمة
+#تخزين مؤقت للمهمة
 
 data = Database.load()
 data["users"][str(user_id)] = {"url": url, "file_id": file_id}
 Database.save(data)
 
-التحقق من وجود ملفات جزئية (.part)
+#التحقق من وجود ملفات جزئية (.part)
 
 partial_path = f"{BASE_DIR}/{file_id}.mp4.part"
 if os.path.exists(partial_path):
@@ -515,11 +515,11 @@ types.InlineKeyboardButton("⌨️ دقة يدوية", callback_data=f"manual{us
 markup.add(*btns)
 bot.send_message(chat_id, "🎬 اختر الدقة المناسبة لسرعة إنترنتك:", reply_markup=markup)
 
-==========================================
+#==========================================
 
-🔘 معالج الأزرار (Callbacks)
+#🔘 معالج الأزرار (Callbacks)
 
-==========================================
+#==========================================
 
 @bot.callback_query_handler(func=lambda call: True)
 def handle_callbacks(call):
@@ -552,11 +552,11 @@ for f in os.listdir(BASE_DIR):
 if file_id in f: os.remove(os.path.join(BASE_DIR, f))
 show_quality_options(call.message.chat.id, owner_id, file_id)
 
-==========================================
+#==========================================
 
-⚙️ منطق التنفيذ النهائي (Final Execution)
+#⚙️ منطق التنفيذ النهائي (Final Execution)
 
-==========================================
+#==========================================
 
 def check_verification_code(message):
 if message.text == VERIFICATION_CODE:
@@ -581,7 +581,7 @@ file_path = f"{BASE_DIR}/{file_id}.{ext}"
 
 prog_msg = bot.send_message(message.chat.id, "⏳ جاري تحضير الرابط والسيرفر...")
 
-تشغيل في خلفية ThreadPool لضمان عدم توقف البوت
+#تشغيل في خلفية ThreadPool لضمان عدم توقف البوت
 
 executor.submit(run_task, prog_msg, user_id, url, quality, file_path)
 def run_task(prog_msg, user_id, url, quality, file_path):
@@ -606,3 +606,5 @@ def run_task(prog_msg, user_id, url, quality, file_path):
             bot.send_message(prog_msg.chat.id, f"❌ حدث خطأ أثناء الرفع: {e}")
     else:
         bot.edit_message_text(f"❌ فشل التحميل:\n{success}", prog_msg.chat.id, prog_msg.message_id)
+
+
