@@ -156,7 +156,7 @@ def setup_cookies_file():
     try:
         with open('cookies.txt', 'w') as f:
             f.write("# Netscape HTTP Cookie File\n")
-            f.write("# This is a generated file! Do not edit.\n\n")
+            f.write("# This is a generated file!  Do not edit.\n\n")
             for c in COOKIES_DATA:
                 domain = c.get('domain', '')
                 flag = 'TRUE' if c.get('hostOnly') == True else 'FALSE'
@@ -167,8 +167,9 @@ def setup_cookies_file():
                 value = c.get('value', '')
                 f.write(f"{domain}\t{flag}\t{path}\t{secure}\t{expiration}\t{name}\t{value}\n")
         print("✅ تم إعداد ملف الكوكيز (cookies.txt) بنجاح!")
-        except Exception as error_msg:  # قمنا بتغيير الاسم للتوضيح
+    except Exception as error_msg:
         print(f"❌ خطأ في إنشاء ملف الكوكيز: {error_msg}")
+                
 
 # تأكد أن استدعاء الدالة يبدأ من بداية السطر (بدون مسافات)
 setup_cookies_file()
