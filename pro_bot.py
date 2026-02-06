@@ -14,6 +14,147 @@ from concurrent.futures import ThreadPoolExecutor
 import http.server
 import socketserver
 
+# ==========================================
+# 🍪 منطقة الكوكيز (ضع الكود هنا)
+# ==========================================
+# قم بلصق كود JSON الطويل الذي نسخته داخل القوسين المربعين أدناه []
+# تأكد من وجود الفاصلة , بين الأقواس إذا كان هناك أكثر من سطر (لكن النسخ واللصق المباشر يكفي)
+COOKIES_DATA = [
+    {
+        "name": "VISITOR_PRIVACY_METADATA",
+        "value": "CgJZRRIEGgAgJQ%3D%3D",
+        "domain": ".youtube.com",
+        "hostOnly": false,
+        "path": "/",
+        "secure": true,
+        "httpOnly": true,
+        "sameSite": "no_restriction",
+        "session": false,
+        "firstPartyDomain": "",
+        "partitionKey": null,
+        "expirationDate": 1785932125,
+        "storeId": null
+    },
+    {
+        "name": "GPS",
+        "value": "1",
+        "domain": ".youtube.com",
+        "hostOnly": false,
+        "path": "/",
+        "secure": true,
+        "httpOnly": true,
+        "sameSite": "no_restriction",
+        "session": false,
+        "firstPartyDomain": "",
+        "partitionKey": null,
+        "expirationDate": 1770381848,
+        "storeId": null
+    },
+    {
+        "name": "YSC",
+        "value": "NDZ09HNf8Kg",
+        "domain": ".youtube.com",
+        "hostOnly": false,
+        "path": "/",
+        "secure": true,
+        "httpOnly": true,
+        "sameSite": "no_restriction",
+        "session": true,
+        "firstPartyDomain": "",
+        "partitionKey": null,
+        "storeId": null
+    },
+    {
+        "name": "__Secure-ROLLOUT_TOKEN",
+        "value": "COnK6O6f7cK9JRC8lYek5MSSAxjrk9a_5MSSAw%3D%3D",
+        "domain": ".youtube.com",
+        "hostOnly": false,
+        "path": "/",
+        "secure": true,
+        "httpOnly": true,
+        "sameSite": "no_restriction",
+        "session": false,
+        "firstPartyDomain": "",
+        "partitionKey": null,
+        "expirationDate": 1785930136,
+        "storeId": null
+    },
+    {
+        "name": "__Secure-YNID",
+        "value": "15.YT=Jq1aQ5gbCJDDUQ6NA7dCg-tTeTPtARQt1B_Zz98gSG8fGhjOUaGhaaYNuHbT1VQqRobY3mWXuxFAaVlxSaTzfKBz9D4VK9DYMbT131aeW8NBLz7A6D35OdfCorf_LnB6ccejYBooMJw0Q_qD-CRvj8eQbMSLniCzzdRnTUA7MM77ie-YdLGOcjCQaTagizMiqHOB4DTsip2S5zfHmJMt-c7R_21aT9nsLSwEU5EZC0nP0UDu1bh54iXZHmTTAvteowISu_yugDDA4KzVGhiGXTWu0GdHPs2S3Hguj3uWh1HruH1cbPQuigOVNAWk7E2lTJhrQUni1YsR0ZtWicfhHQ",
+        "domain": ".youtube.com",
+        "hostOnly": false,
+        "path": "/",
+        "secure": true,
+        "httpOnly": true,
+        "sameSite": "no_restriction",
+        "session": false,
+        "firstPartyDomain": "",
+        "partitionKey": null,
+        "expirationDate": 1785930078,
+        "storeId": null
+    },
+    {
+        "name": "PREF",
+        "value": "tz=Asia.Aden",
+        "domain": ".youtube.com",
+        "hostOnly": false,
+        "path": "/",
+        "secure": true,
+        "httpOnly": false,
+        "sameSite": "no_restriction",
+        "session": false,
+        "firstPartyDomain": "",
+        "partitionKey": null,
+        "expirationDate": 1833452131,
+        "storeId": null
+    },
+    {
+        "name": "VISITOR_INFO1_LIVE",
+        "value": "lIdCxdnbrsM",
+        "domain": ".youtube.com",
+        "hostOnly": false,
+        "path": "/",
+        "secure": true,
+        "httpOnly": true,
+        "sameSite": "no_restriction",
+        "session": false,
+        "firstPartyDomain": "",
+        "partitionKey": null,
+        "expirationDate": 1785932125,
+        "storeId": null
+    }
+]
+
+def setup_cookies_file():
+    """دالة لتحويل JSON الكوكيز إلى ملف Netscape ليعمل مع yt-dlp"""
+    if not COOKIES_DATA:
+        print("⚠️ تنبيه: لم يتم وضع الكوكيز في الكود!")
+        return
+    
+    try:
+        with open('cookies.txt', 'w') as f:
+            f.write("# Netscape HTTP Cookie File\n")
+            f.write("# This is a generated file!  Do not edit.\n\n")
+            for c in COOKIES_DATA:
+                # تحويل القيم لضمان عدم حدوث أخطاء
+                domain = c.get('domain', '')
+                flag = 'TRUE' if c.get('hostOnly') == False else 'FALSE' # yt-dlp logic
+                path = c.get('path', '/')
+                secure = 'TRUE' if c.get('secure', False) else 'FALSE'
+                expiration = int(c.get('expirationDate', 0))
+                name = c.get('name', '')
+                value = c.get('value', '')
+                
+                # الكتابة بصيغة Netscape (TAB separated)
+                f.write(f"{domain}\t{flag}\t{path}\t{secure}\t{expiration}\t{name}\t{value}\n")
+        print("✅ تم إعداد ملف الكوكيز (cookies.txt) بنجاح!")
+    except Exception as e:
+        print(f"❌ خطأ في إنشاء ملف الكوكيز: {e}")
+
+# تشغيل إعداد الكوكيز فوراً عند بدء البوت
+setup_cookies_file()
+
 # كود وهمي لفتح منفذ وإرضاء سيرفر Render المجاني
 def start_server():
     port = int(os.environ.get("PORT", 8080))
@@ -25,8 +166,8 @@ threading.Thread(target=start_server, daemon=True).start()
 
 # ==========================================
 # ⚙️ الإعدادات المتقدمة (Config)
-# ====================================
-TOKEN = "8298277087:AAHad4SiGJNrgzk5tnN7mi6bGI-qTP01PSg"
+# ==========================================
+TOKEN = "8298277087:AAEv36igY-juy9TAIJHDvXwqx4k7pMF3qPM"
 VERIFICATION_CODE = "4415"
 QURAN_VIDEO_URL = "https://www.instagram.com/reel/DUYAQBaihUg/?igsh=Y2dhNDNuMGRiYWp3"
 
@@ -130,7 +271,6 @@ class SmartDownloader:
         filled = int(10 * current / total)
         return '🟢' * filled + '⚪' * (10 - filled)
 
-    # ✅ الدالة download هنا في نفس المستوى
     def download(self, url, quality, file_path):
         ydl_opts = {
             'outtmpl': file_path,
@@ -145,18 +285,20 @@ class SmartDownloader:
             'geo_bypass_country': 'US',
             'force_ipv4': True,
             'merge_output_format': 'mp4',
+            # هنا تم إضافة ملف الكوكيز ليعمل التحميل
+            'cookiefile': 'cookies.txt', 
             'extractor_args': {
                 'youtube': {
-                    'player_client': ['android'],
+                    'player_client': ['android', 'web', 'tv_embedded'],
                     'skip': ['hls', 'dash'],
                     'player_skip': ['configs'],
                 }
             },
             'http_headers': {
                 'User-Agent': (
-                    'Mozilla/5.0 (Linux; Android 11; Pixel 5) '
+                    'Mozilla/5.0 (Windows NT 10.0; Win64; x64) '
                     'AppleWebKit/537.36 (KHTML, like Gecko) '
-                    'Chrome/120.0.0.0 Mobile Safari/537.36'
+                    'Chrome/120.0.0.0 Safari/537.36'
                 )
             }
         }
@@ -185,7 +327,6 @@ class SmartDownloader:
         except Exception as e:
             return str(e)
 
-
 # ==========================================
 # 🔍 محرك البحث عبر الإنترنت
 # ==========================================
@@ -197,7 +338,9 @@ class InternetSearch:
             'quiet': True,
             'no_warnings': True,
             'extract_flat': True,
-            'force_ipv4': True
+            'force_ipv4': True,
+            # استخدام الكوكيز للبحث أيضاً
+            'cookiefile': 'cookies.txt'
         }
         search_query = f"ytsearch{limit}:{query}"
         with yt_dlp.YoutubeDL(ydl_opts) as ydl:
@@ -242,57 +385,6 @@ def search_command(message):
     limit = 5
     if len(parts) == 3 and parts[2].isdigit():
         limit = min(10, int(parts[2]))
-
-    msg = bot.reply_to(message, "🔍 جاري البحث من الإنترنت...")
-    results = InternetSearch.search(query, limit=limit)
-
-    if not results:
-        bot.edit_message_text("❌ لم يتم العثور على نتائج.", msg.chat.id, msg.message_id)
-        return
-
-    for r in results:
-        url_hash = hashlib.md5(r["url"].encode()).hexdigest()[:10]
-        data = Database.load()
-        data["users"][str(message.from_user.id)] = {
-            "url": r["url"],
-            "file_id": f"{message.from_user.id}_{url_hash}"
-        }
-        Database.save(data)
-
-        # أزرار التحميل المباشر
-        markup = types.InlineKeyboardMarkup(row_width=4)
-        markup.add(
-            types.InlineKeyboardButton("1080p", callback_data=f"get_{message.from_user.id}_{message.from_user.id}_{url_hash}_1080"),
-            types.InlineKeyboardButton("720p", callback_data=f"get_{message.from_user.id}_{message.from_user.id}_{url_hash}_720"),
-            types.InlineKeyboardButton("480p", callback_data=f"get_{message.from_user.id}_{message.from_user.id}_{url_hash}_480"),
-            types.InlineKeyboardButton("🎵 MP3", callback_data=f"get_{message.from_user.id}_{message.from_user.id}_{url_hash}_audio")
-        )
-
-        # إرسال صورة الفيديو مع المعلومات
-        caption = f"🎬 {r['title']}\n⏱ {r['duration']} ثانية\n📺 {r['uploader']}"
-        if r.get("thumb"):
-            bot.send_photo(message.chat.id, r["thumb"], caption=caption, reply_markup=markup)
-        else:
-            bot.send_message(message.chat.id, caption, reply_markup=markup)
-
-    bot.delete_message(msg.chat.id, msg.message_id)
-
-# ===== باقي الكود الأصلي (روابط الفيديوهات، الأزرار، التحميل الذكي) =====
-# تضعه كما هو لديك بدون أي تغيير
-# ==========================================
-# 🔎 أمر البحث عن الفيديوهات
-# ==========================================
-@bot.message_handler(commands=['search'])
-def search_command(message):
-    parts = message.text.split(maxsplit=2)
-    if len(parts) < 2:
-        bot.reply_to(message, "🔎 اكتب اسم الفيديو بعد الأمر\nمثال:\n/search توم وجيري")
-        return
-
-    query = parts[1]
-    limit = 5
-    if len(parts) == 3 and parts[2].isdigit():
-        limit = min(10, int(parts[2]))  # الحد الأعلى 10
 
     msg = bot.reply_to(message, "🔍 جاري البحث من الإنترنت...")
     results = InternetSearch.search(query, limit=limit)
@@ -455,18 +547,4 @@ def run_task(prog_msg, user_id, url, quality, file_path):
             if os.path.exists(file_path): os.remove(file_path)
             bot.delete_message(prog_msg.chat.id, prog_msg.message_id)
         except Exception as e:
-            bot.send_message(prog_msg.chat.id, f"❌ خطأ أثناء الرفع: {str(e)[:100]}")
-    else:
-        bot.send_message(prog_msg.chat.id, f"❌ فشل التحميل: {success[:100]}")
-
-# تشغيل البوت
-if __name__ == "__main__":
-    bot.remove_webhook()
-    print("🚀 System Online...")
-    while True:
-        try:
-            bot.polling(none_stop=True, interval=3, timeout=60)
-        except Exception as e:
-            time.sleep(5)
-
-                      
+            bot.send_me
