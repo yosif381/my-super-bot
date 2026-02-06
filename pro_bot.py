@@ -13,6 +13,25 @@ import logging
 from concurrent.futures import ThreadPoolExecutor
 import http.server
 import socketserver
+from flask import Flask
+from threading import Thread
+
+# ==========================================
+# 🌐 سيرفر Flask المتطور (لإبقاء البوت حياً)
+# ==========================================
+app = Flask('')
+
+@app.route('/')
+def home():
+    return "<b>Telegram Bot is Running by Your Name! 🚀</b>"
+
+def run():
+    # Render يعطيك منفذ (Port) تلقائي، نستخدمه هنا
+    app.run(host='0.0.0.0', port=8080)
+
+def keep_alive():
+    t = Thread(target=run)
+    t.start()
 
 # ==========================================
 # 🍪 منطقة الكوكيز (تم التصحيح لتعمل مع بايثون)
@@ -155,13 +174,6 @@ def setup_cookies_file():
 setup_cookies_file()
 
 # كود وهمي لفتح منفذ وإرضاء سيرفر Render المجاني
-def start_server():
-    port = int(os.environ.get("PORT", 8080))
-    handler = http.server.SimpleHTTPRequestHandler
-    with socketserver.TCPServer(("", port), handler) as httpd:
-        httpd.serve_forever()
-
-threading.Thread(target=start_server, daemon=True).start()
 
 # ==========================================
 # ⚙️ الإعدادات المتقدمة (Config)
@@ -544,8 +556,3 @@ def run_task(prog_msg, user_id, url, quality, file_path):
             if os.path.exists(file_path): os.remove(file_path)
             bot.delete_message(prog_msg.chat.id, prog_msg.message_id)
         except Exception as e:
-            bot.send_message(prog_msg.chat.id, f"⚠️ خطأ في الرفع: {e}")
-    else:
-        bot.edit_message_text(f"❌ فشل التحميل: {success}", prog_msg.chat.id, prog_msg.message_id)
-
-# ===========
