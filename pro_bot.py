@@ -148,30 +148,38 @@ COOKIES_DATA = [
 }
 ]
 def setup_cookies_file():
-    """دالة لتحويل JSON الكوكيز إلى ملف Netscape ليعمل مع yt-dlp"""
+    """دالة احترافية لإنشاء ملف كوكيز بتنسيق Netscape الصحيح"""
     if not COOKIES_DATA:
-        print("⚠️ تنبيه: لم يتم وضع الكوكيز في الكود!")
+        print("⚠️ تنبيه: لم يتم وضع الكوكيز!")
         return
 
     try:
-        with open('cookies.txt', 'w') as f:
+        with open('cookies.txt', 'w', encoding='utf-8') as f:
+            # السطر التعريفي الإلزامي لتنسيق Netscape
             f.write("# Netscape HTTP Cookie File\n")
+            f.write("# http://curl.haxx.se/rfc/cookie_spec.html\n")
             f.write("# This is a generated file!  Do not edit.\n\n")
+            
             for c in COOKIES_DATA:
+                # تحويل القيم للمطلوب في التنسيق العالمي
                 domain = c.get('domain', '')
-                flag = 'TRUE' if c.get('hostOnly') == True else 'FALSE'
+                # التنسيق يتطلب TRUE/FALSE كـ نصوص واضحة
+                flag = 'TRUE' if domain.startswith('.') else 'FALSE'
                 path = c.get('path', '/')
-                secure = 'TRUE' if c.get('secure', False) else 'FALSE'
-                expiration = int(c.get('expirationDate', 0)) if c.get('expirationDate') is not None else 0
+                secure = 'TRUE' if c.get('secure') else 'FALSE'
+                expiration = int(c.get('expirationDate', 0)) if c.get('expirationDate') else 0
                 name = c.get('name', '')
                 value = c.get('value', '')
-                f.write(f"{domain}\t{flag}\t{path}\t{secure}\t{expiration}\t{name}\t{value}\n")
-        print("✅ تم إعداد ملف الكوكيز (cookies.txt) بنجاح!")
-    except Exception as error_msg:
-        print(f"❌ خطأ في إنشاء ملف الكوكيز: {error_msg}")
                 
+                # كتابة السطر مع استخدام \t (التاب) الحقيقية كفاصل
+                line = f"{domain}\t{flag}\t{path}\t{secure}\t{expiration}\t{name}\t{value}\n"
+                f.write(line)
+                
+        print("✅ تم ضبط ملف cookies.txt بالمعايير العالمية!")
+    except Exception as e:
+        print(f"❌ خطأ تقني في الملف: {e}")
 
-# تأكد أن استدعاء الدالة يبدأ من بداية السطر (بدون مسافات)
+# استدعاء الدالة
 setup_cookies_file()
     
 
