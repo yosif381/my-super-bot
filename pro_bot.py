@@ -260,22 +260,20 @@ def is_owner(call, owner_id):
 #🚀 محرك التحميل الذكي
 
 #==========================================
-
 class SmartDownloader:
-    def init(self, chat_id, message_id, user_id):
-        self.chat_id = chat_id
-        self.msg_id = message_id
-        self.user_id = user_id
-        self.last_update_time = 0
-        def progress_hook(self, d):
-            if d['status'] == 'downloading':
-                now = time.time()
-            if now - self.last_update_time < 10:
-                return
-                self.last_update_time = now
-                p = d.get('_percent_str', '0%')    
-                speed = d.get('_speed_str', 'N/A')    
-                eta = d.get('_eta_str', 'N/A')    
+    def create_progress_bar(self, current, total):
+        total = total or 1
+        filled = int(10 * current / total)
+        return '🟢' * filled + '⚪' * (10 - filled)
+
+    def download(self, url, quality, file_path):
+        ydl_opts = {
+            'outtmpl': file_path,
+            'continuedl': True,
+            'retries': 50,
+            # ... أكمل بقية الخيارات مع الحفاظ على نفس مستوى الإزاحة
+        }
+        
 
     bar = self.create_progress_bar(    
         d.get('downloaded_bytes', 0),    
