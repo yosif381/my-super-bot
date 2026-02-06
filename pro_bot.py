@@ -147,33 +147,29 @@ COOKIES_DATA = [
 "storeId": None
 }
 ]
-
 def setup_cookies_file():
-"""دالة لتحويل JSON الكوكيز إلى ملف Netscape ليعمل مع yt-dlp"""
-if not COOKIES_DATA:
-print("⚠️ تنبيه: لم يتم وضع الكوكيز في الكود!")
-return
+    """دالة لتحويل JSON الكوكيز إلى ملف Netscape ليعمل مع yt-dlp"""
+    if not COOKIES_DATA:
+        print("⚠️ تنبيه: لم يتم وضع الكوكيز في الكود!")
+        return
 
-try:
-with open('cookies.txt', 'w') as f:
-f.write("# Netscape HTTP Cookie File\n")
-f.write("# This is a generated file!  Do not edit.\n\n")
-for c in COOKIES_DATA:
-# تحويل القيم لضمان عدم حدوث أخطاء
-domain = c.get('domain', '')
-# تحويل True/False إلى TRUE/FALSE
-flag = 'TRUE' if c.get('hostOnly') == True else 'FALSE'
-path = c.get('path', '/')
-secure = 'TRUE' if c.get('secure', False) else 'FALSE'
-expiration = int(c.get('expirationDate', 0)) if c.get('expirationDate') is not None else 0
-name = c.get('name', '')
-value = c.get('value', '')
+    try:
+        with open('cookies.txt', 'w') as f:
+            f.write("# Netscape HTTP Cookie File\n")
+            f.write("# This is a generated file! Do not edit.\n\n")
+            for c in COOKIES_DATA:
+                domain = c.get('domain', '')
+                flag = 'TRUE' if c.get('hostOnly') == True else 'FALSE'
+                path = c.get('path', '/')
+                secure = 'TRUE' if c.get('secure', False) else 'FALSE'
+                expiration = int(c.get('expirationDate', 0)) if c.get('expirationDate') is not None else 0
+                name = c.get('name', '')
+                value = c.get('value', '')
+                f.write(f"{domain}\t{flag}\t{path}\t{secure}\t{expiration}\t{name}\t{value}\n")
+        print("✅ تم إعداد ملف الكوكيز (cookies.txt) بنجاح!")
+    except Exception as e:
+        print(f"❌ خطأ في إنشاء ملف الكوكيز: {e}")
 
-# الكتابة بصيغة Netscape (TAB separated)    
-        f.write(f"{domain}\t{flag}\t{path}\t{secure}\t{expiration}\t{name}\t{value}\n")    
-print("✅ تم إعداد ملف الكوكيز (cookies.txt) بنجاح!")
-
-except Exception as e:
 print(f"❌ خطأ في إنشاء ملف الكوكيز: {e}")
 
 #تشغيل إعداد الكوكيز فوراً عند بدء البوت
