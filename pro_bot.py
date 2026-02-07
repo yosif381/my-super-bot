@@ -230,18 +230,11 @@ class SmartDownloader:
             
 
 #==========================================
-
-#🔍  البحث عبر الإنترنت محرك
-
-#==========================================
-#==========================================
-# 🔍 محرك البحث عبر الإنترنت (InternetSearch)
-#==========================================
+# محرك البحث عبر الانترنت 
 class InternetSearch:
     @staticmethod
-    def search(query, platform='tiktok', limit=5):
+    def search(query, platform='tiktok', limit=3):
         results = []
-        # تحديد الموقع بناءً على الاختصار
         platform_map = {
             'tik': 'tiktok',
             'ins': 'instagram',
@@ -250,31 +243,35 @@ class InternetSearch:
         }
         target = platform_map.get(platform, 'tiktok')
         
+        # البحث باستخدام محرك بحث يوتيوب العام (لأنه الأقوى في النتائج) 
+        # مع إضافة اسم المنصة للكلمات المفتاحية
+        search_query = f"ytsearch{limit}:{target} {query}"
+        
         ydl_opts = {
             'quiet': True,
             'no_warnings': True,
             'extract_flat': True,
             'force_ipv4': True,
             'ignoreerrors': True,
+            'user_agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36',
         }
         
-        # البحث في المنصة المحددة
-        search_query = f"{target}search{limit}:{query}"
         with yt_dlp.YoutubeDL(ydl_opts) as ydl:
             try:
                 info = ydl.extract_info(search_query, download=False)
-                for e in info.get('entries', []):
-                    if e:
-                        results.append({
-                            "title": e.get("title", "فيديو بدون عنوان"),
-                            "url": e.get("url"),
-                            "uploader": e.get("uploader", target.capitalize())
-                        })
-            except: pass
+                if 'entries' in info:
+                    for e in info['entries']:
+                        if e:
+                            results.append({
+                                "title": e.get("title", "فيديو بدون عنوان"),
+                                "url": e.get("url"),
+                                "uploader": e.get("uploader", target.capitalize()),
+                                "duration": e.get("duration", 0)
+                            })
+            except Exception as e:
+                print(f"Search Error: {e}")
         return results
-        
-                        
-
+                                
 #========================================# ==========================================
 # 🤖 معالجة الأوامر والرسائل
 # ==========================================
