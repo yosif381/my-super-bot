@@ -202,38 +202,50 @@ class SmartDownloader:
             
             
 
-#==========================================
-from duckduckgo_search import DDGS
+#========================================
+import requests
+from bs4 import BeautifulSoup # أضف beautifulsoup4 لملف requirements.txt
 
 class InternetSearch:
     @staticmethod
     def search(query, platform='tik', limit=3):
         results = []
-        # تحديد الفلتر بناءً على المنصة
         platform_map = {
-            'tik': 'site:tiktok.com',
-            'ins': 'site:instagram.com',
-            'fb': 'site:facebook.com'
+            'tik': 'tiktok.com',
+            'ins': 'instagram.com',
+            'fb': 'facebook.com'
         }
-        site = platform_map.get(platform, 'site:tiktok.com')
-        search_query = f"{site} {query}"
+        site = platform_map.get(platform, 'tiktok.com')
+        # استخدام محرك بحث Google عبر رابط مباشر (طريقة ذكية)
+        search_url = f"https://www.google.com/search?q=site:{site}+{query}"
         
+        headers = {
+            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
+        }
+
         try:
-            with DDGS() as ddgs:
-                # البحث عن الروابط الحقيقية
-                ddgs_results = ddgs.text(search_query, max_results=limit)
-                for r in ddgs_results:
-                    href = r.get("href", "")
-                    # التأكد أن الرابط ليس من يوتيوب
-                    if "youtube.com" not in href and "youtu.be" not in href:
+            response = requests.get(search_url, headers=headers, timeout=10)
+            soup = BeautifulSoup(response.text, 'html.parser')
+            
+            # استخراج الروابط من نتائج بحث جوجل
+            anchors = soup.find_all('a')
+            count = 0
+            for anchor in anchors:
+                link = anchor.get('href', '')
+                if 'url?q=' in link:
+                    clean_link = link.split('url?q=')[1].split('&')[0]
+                    if site in clean_link and count < limit:
                         results.append({
-                            "title": r.get("title", "فيديو مكتشف"),
-                            "url": href,
+                            "title": f"فيديو من {platform.upper()}",
+                            "url": clean_link,
                             "uploader": platform.upper()
                         })
+                        count += 1
         except Exception as e:
             print(f"Search Error: {e}")
+            
         return results
+
 
                                 
 #========================================# ==========================================
