@@ -376,7 +376,6 @@ def search_command(message):
     for r in results:
         # هنا نستخدم نفس منطق الأزرار السابق
         # ... (بقية الكود الخاص بإرسال النتائج والأزرار)
-        :
         url_hash = hashlib.md5(r["url"].encode()).hexdigest()[:10]
         data = Database.load()
         data["users"][str(message.from_user.id)] = {
