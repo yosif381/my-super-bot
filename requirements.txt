@@ -3,3 +3,5 @@ yt-dlp
 flask
 psutil
 duckduckgo_search
+beautifulsoup4
+requests
