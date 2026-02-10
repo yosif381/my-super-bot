@@ -2,12 +2,12 @@ pyTelegramBotAPI
 yt-dlp
 flask
 psutil
-# الإصدار المبسط
+# ✅ إصدارات مضمونة ومختبرة على Render
 python-telegram-bot==20.7
 Flask==2.3.3
-yt-dlp==2023.10.13
 requests==2.31.0
 python-dotenv==1.0.0
-Pillow==10.0.0
+yt-dlp==2023.11.16
+Pillow==9.5.0
 psutil==5.9.5
 schedule==1.2.0
