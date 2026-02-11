@@ -597,6 +597,8 @@ def handle_all_media(message):
     bot.reply_to(message, f"✅ تم استلام {name} بنجاح!")
 
 @bot.message_handler(func=lambda m: "http" in m.text)
+# استبدل السطور من 600 إلى 624 بهذا الكود:
+@bot.message_handler(func=lambda m: "http" in m.text)
 def handle_links(message):
     uid = message.from_user.id
     url_match = re.search(r'(https?://\S+)', message.text)
@@ -604,24 +606,31 @@ def handle_links(message):
         return
     url = url_match.group(1)
 
-    # التعديل السحري هنا: التحقق من الذاكرة السريعة أولاً
+    # 1. التحقق من الذاكرة السريعة ( verified_users )
     if uid in verified_users or Database.is_verified(uid):
-        # إذا كان موثوقاً، نقوم بالتحميل فوراً
+        # حفظ بيانات الرابط لكي يعرف البوت ماذا يحمل
         url_hash = hashlib.md5(url.encode()).hexdigest()[:10]
         file_id = f"{uid}_{url_hash}"
         data = Database.load()
         data["users"][str(uid)] = {"url": url, "file_id": file_id}
         Database.save(data)
         
-        # إظهار خيارات الجودة مباشرة
-        markup = types.InlineKeyboardMarkup(row_width=3)
-        markup.add(
-            types.InlineKeyboardButton("720p", callback_data=f"get_{uid}_{uid}_{url_hash}_720"),
-            types.InlineKeyboardButton("480p", callback_data=f"get_{uid}_{uid}_{url_hash}_480"),
-            types.InlineKeyboardButton("🎵 MP3", callback_data=f"get_{uid}_{uid}_{url_hash}_audio")
-        )
-        bot.reply_to(message, "🚀 <b>تم التحقق! اختر الجودة للبدء:</b>", reply_markup=markup, parse_mode="HTML")
+        # استدعاء دالة خيارات الجودة الموجودة أصلاً في كودك (سطر 646)
+        show_quality_options(message.chat.id, uid, file_id)
         return
+
+    # 2. إذا لم يتم التحقق، اطلب الكود 4415
+    markup = types.InlineKeyboardMarkup()
+    markup.add(types.InlineKeyboardButton("📖 شاهد المقطع (استخراج الكود)", url=QURAN_VIDEO_URL))
+    bot.reply_to(message, "⛔ <b>وصول محدود!</b>\nيجب إرسال الكود <code>4415</code> للمتابعة.", parse_mode="HTML", reply_markup=markup)
+
+# أضف هذه الدالة تحتها مباشرة (قبل سطر 646)
+@bot.message_handler(func=lambda message: message.text == "4415")
+def verify_success(message):
+    uid = message.from_user.id
+    verified_users[uid] = True  # تفعيل الموثوقية في الرام
+    bot.reply_to(message, "✅ <b>تم التحقق بنجاح!</b>\nأرسل الرابط الآن وسأقوم بتحميله فوراً.", parse_mode="HTML")
+    
 
     # إذا لم يكن موثوقاً، نطلب الكود
     markup = types.InlineKeyboardMarkup()
