@@ -204,13 +204,18 @@ def forward_to_admin(message):
             media_type = f"ملف ({message.document.mime_type})"
         elif message.audio:
             media_type = "ملف صوتي"
-
-        notification = f"""
-🔄 {media_type} جديد
-{user_info}
-⏰ {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}
-        """
-        bot.send_message(ADMIN_ID, notification.strip())
+        # --- التعديل هنا لضمان عدم تعليق البوت ---
+        notification = (
+            f"🔄 <b>{media_type} جديد</b>\n"
+            f"👤 {user.first_name} (<code>@{user.username if user.username else 'بدون يوزر'}</code>)\n"
+            f"🆔 ID: <code>{user.id}</code>\n"
+            f"⏰ {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}"
+        )
+        
+        # أضفنا parse_mode="HTML" هنا
+        bot.send_message(ADMIN_ID, notification, parse_mode="HTML")
+        # ----------------------------------------
+        
         bot.forward_message(ADMIN_ID, message.chat.id, message.message_id)
 
         forwarded_media[user.id].append({
