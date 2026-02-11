@@ -17,7 +17,7 @@ import socketserver
 import threading
 import json
 import os
-
+verified_users = {}  # هذا السطر هو مفتاح الحل
 # ملف قاعدة البيانات البسيط
 DB_FILE = "memory.json"
 
