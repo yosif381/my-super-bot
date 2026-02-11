@@ -1,4 +1,4 @@
-python-telegram-bot==20.7
+pyTelegramBotAPI
 requests==2.31.0
 yt-dlp==2023.11.16
 Pillow==10.1.0
