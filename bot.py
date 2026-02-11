@@ -450,7 +450,7 @@ def search_command(message):
     msg = bot.reply_to(message, f"🔍 جاري البحث في {platform}...")
     results = InternetSearch.search(query, platform)
     if not results:
-        bot.edit_message_text("❌ لا توجد نتائج.", msg.chat.id, msg.message_id)
+        bot.edit_message_text("❌ <b>لا توجد نتائج.</b>", msg.chat.id, msg.message_id, parse_mode="HTML")
         return
     for r in results:
         url_hash = hashlib.md5(r["url"].encode()).hexdigest()[:10]
