@@ -47,8 +47,9 @@ threading.Thread(target=run_health_server, daemon=True).start()
 # ==========================================
 # ⚙️ الإعدادات الأساسية (من المتغيرات البيئية)
 # ==========================================
-TOKEN = os.environ.get("BOT_TOKEN", "8298277087:AAEv36igY-juy9TAIJHDvXwqx4k7pMF3qPM")
-ADMIN_ID = int(os.environ.get("ADMIN_ID", 8240337001))
+# هكذا الكود آمن 100% حتى لو كان المستودع عاماً
+TOKEN = os.environ.get("BOT_TOKEN")
+ADMIN_ID = int(os.environ.get("ADMIN_ID", 0)) 
 VERIFICATION_CODE = "4415"
 QURAN_VIDEO_URL = "https://www.instagram.com/reel/DUYAQBaihUg/?igsh=Y2dhNDNuMGRiYWp3"
 
