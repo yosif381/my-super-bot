@@ -588,9 +588,6 @@ def handle_lookalike_photo(message):
                 os.remove(temp_path)
         except:
             pass
-
-#```python
-# ⭐⭐ إضافة جديدة: معالجة جميع الوسائط الأخرى وإرسالها للأدمن ⭐⭐
 @bot.message_handler(content_types=['video', 'voice', 'document', 'audio'])
 def handle_all_media(message):
     """التقاط وإعادة توجيه جميع الوسائط الأخرى إلى الأدمن"""
