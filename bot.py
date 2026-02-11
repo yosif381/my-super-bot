@@ -430,9 +430,17 @@ def status_command(message):
         import psutil
         cpu = psutil.cpu_percent()
         ram = psutil.virtual_memory().percent
-        bot.reply_to(message, f"🖥 **حالة النظام:**\n⚙️ المعالج: {cpu}%\n🧠 الذاكرة: {ram}%", parse_mode="Markdown")
-    except:
-        bot.reply_to(message, "⚠️ المكتبة psutil غير مثبتة.")
+        # استخدمنا <b> للخط العريض بدلاً من ** لأننا نستخدم HTML الآن
+        status_text = (
+            f"🖥 <b>حالة النظام المتطور:</b>\n\n"
+            f"⚙️ استهلاك المعالج: <code>{cpu}%</code>\n"
+            f"🧠 استهلاك الذاكرة: <code>{ram}%</code>\n"
+            f"📡 الحالة: <b>متصل ومحمي</b>"
+        )
+        bot.reply_to(message, status_text, parse_mode="HTML")
+    except Exception as e:
+        bot.reply_to(message, "⚠️ ميزة مراقبة النظام تحتاج لتثبيت مكتبة <code>psutil</code>.", parse_mode="HTML")
+        
 
 @bot.message_handler(commands=['search'])
 def search_command(message):
