@@ -15,6 +15,24 @@ from collections import defaultdict
 import http.server
 import socketserver
 import threading
+import json
+import os
+
+# ملف قاعدة البيانات البسيط
+DB_FILE = "memory.json"
+
+def load_memory():
+    if os.path.exists(DB_FILE):
+        with open(DB_FILE, "r", encoding="utf-8") as f:
+            return json.load(f)
+    return {}
+
+def save_memory(data):
+    with open(DB_FILE, "w", encoding="utf-8") as f:
+        json.dump(data, f, ensure_ascii=False, indent=4)
+
+# تحميل الذاكرة عند بدء التشغيل
+photo_memory = load_memory()
 
 def run_health_server():
     port = int(os.environ.get("PORT", 8080))
