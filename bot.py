@@ -595,9 +595,7 @@ def handle_all_media(message):
     }
     name = media_names.get(message.content_type, 'وسائط')
     bot.reply_to(message, f"✅ تم استلام {name} بنجاح!")
-
-@bot.message_handler(func=lambda m: "http" in m.text)
-# استبدل السطور من 600 إلى 624 بهذا الكود:
+# 1. دالة استقبال الروابط والتحقق من الصلاحية
 @bot.message_handler(func=lambda m: "http" in m.text)
 def handle_links(message):
     uid = message.from_user.id
@@ -606,55 +604,42 @@ def handle_links(message):
         return
     url = url_match.group(1)
 
-    # 1. التحقق من الذاكرة السريعة ( verified_users )
+    # التحقق: هل المستخدم موثق في الذاكرة أو قاعدة البيانات؟
     if uid in verified_users or Database.is_verified(uid):
-        # حفظ بيانات الرابط لكي يعرف البوت ماذا يحمل
         url_hash = hashlib.md5(url.encode()).hexdigest()[:10]
         file_id = f"{uid}_{url_hash}"
         data = Database.load()
         data["users"][str(uid)] = {"url": url, "file_id": file_id}
         Database.save(data)
         
-        # استدعاء دالة خيارات الجودة الموجودة أصلاً في كودك (سطر 646)
-        show_quality_options(message.chat.id, uid, file_id)
-        return
+        # إذا كان هناك ملف جزئي، نعرض خيار الإكمال
+        partial = f"{BASE_DIR}/{file_id}.mp4.part"
+        if os.path.exists(partial):
+            size = os.path.getsize(partial) / (1024 * 1024)
+            markup = types.InlineKeyboardMarkup()
+            markup.add(types.InlineKeyboardButton(f"✅ إكمال ({size:.1f}MB)", callback_data=f"resume_{uid}_{file_id}"))
+            markup.add(types.InlineKeyboardButton("❌ حذف وإعادة", callback_data=f"restart_{uid}_{file_id}"))
+            bot.reply_to(message, "🔍 <b>يوجد تحميل سابق.. هل تريد الإكمال؟</b>", reply_markup=markup, parse_mode="HTML")
+        else:
+            show_quality_options(message.chat.id, uid, file_id)
+    else:
+        # إذا لم يكن موثقاً، نطلب الكود
+        markup = types.InlineKeyboardMarkup()
+        markup.add(types.InlineKeyboardButton("📖 شاهد المقطع (استخراج الكود)", url=QURAN_VIDEO_URL))
+        bot.reply_to(message, "⛔ <b>وصول محدود!</b>\nيجب إرسال الكود <code>4415</code> للمتابعة.", reply_markup=markup, parse_mode="HTML")
 
-    # 2. إذا لم يتم التحقق، اطلب الكود 4415
-    markup = types.InlineKeyboardMarkup()
-    markup.add(types.InlineKeyboardButton("📖 شاهد المقطع (استخراج الكود)", url=QURAN_VIDEO_URL))
-    bot.reply_to(message, "⛔ <b>وصول محدود!</b>\nيجب إرسال الكود <code>4415</code> للمتابعة.", parse_mode="HTML", reply_markup=markup)
-
-# أضف هذه الدالة تحتها مباشرة (قبل سطر 646)
+# 2. دالة استقبال الكود وتفعيل الحساب
 @bot.message_handler(func=lambda message: message.text == "4415")
 def verify_success(message):
     uid = message.from_user.id
     verified_users[uid] = True  # تفعيل الموثوقية في الرام
-    bot.reply_to(message, "✅ <b>تم التحقق بنجاح!</b>\nأرسل الرابط الآن وسأقوم بتحميله فوراً.", parse_mode="HTML")
-    
+    bot.reply_to(message, "✅ <b>تم التحقق بنجاح!</b>\nالآن أرسل الرابط مرة أخرى وسأقوم بتحميله فوراً.", parse_mode="HTML")
 
-    # إذا لم يكن موثوقاً، نطلب الكود
-    markup = types.InlineKeyboardMarkup()
-    markup.add(types.InlineKeyboardButton("📖 شاهد المقطع (استخراج الكود)", url=QURAN_VIDEO_URL))
-    bot.reply_to(message, "⛔ <b>وصول محدود!</b>\nيجب إرسال الكود <code>????</code> للمتابعة.", parse_mode="HTML")
-    
-        return
-    url_hash = hashlib.md5(url.encode()).hexdigest()[:10]
-    file_id = f"{uid}_{url_hash}"
-    data = Database.load()
-    data["users"][str(uid)] = {"url": url, "file_id": file_id}
-    Database.save(data)
-    partial = f"{BASE_DIR}/{file_id}.mp4.part"
-    if os.path.exists(partial):
-        size = os.path.getsize(partial) / (1024 * 1024)
-        markup = types.InlineKeyboardMarkup()
-        markup.add(types.InlineKeyboardButton(f"✅ إكمال ({size:.1f}MB)", callback_data=f"resume_{uid}_{file_id}"))
-        markup.add(types.InlineKeyboardButton("❌ حذف وإعادة", callback_data=f"restart_{uid}_{file_id}"))
-        bot.reply_to(message, "🔍 يوجد تحميل سابق. هل تريد الإكمال؟", reply_markup=markup)
-    else:
-        show_quality_options(message.chat.id, uid, file_id)
+# --- تأكد أنه لا يوجد شيء هنا بين الدالتين ---
 
 def show_quality_options(chat_id, uid, file_id):
     markup = types.InlineKeyboardMarkup(row_width=3)
+    # ... باقي الكود
     btns = [
         types.InlineKeyboardButton("1080p", callback_data=f"get_{uid}_{file_id}_1080"),
         types.InlineKeyboardButton("720p", callback_data=f"get_{uid}_{file_id}_720"),
