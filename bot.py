@@ -116,28 +116,25 @@ class SmartDownloader:
                 bot.edit_message_text(text, self.chat_id, self.msg_id, parse_mode="HTML")
             except:
                 pass
-
     def create_progress_bar(self, current, total):
         total = total or 1
         filled = int(10 * current / total)
         return '🟢' * filled + '⚪' * (10 - filled)
 
     def download(self, url, quality, file_path):
-        def download(self, url, quality, file_path):
+        # لاحظ المسافات هنا (السر في نجاح الكود)
         ydl_opts = {
             'outtmpl': file_path,
             'continuedl': True,
-            'retries': 15, # زيادة عدد المحاولات
+            'retries': 15,
             'socket_timeout': 60,
             'progress_hooks': [self.progress_hook],
             'quiet': True,
             'no_warnings': True,
-            # التعديل الذهبي: محاكاة متصفح ويندوز حديث لتجنب الحظر
             'user_agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/119.0.0.0 Safari/537.36',
             'http_headers': {
                 'Referer': 'https://www.instagram.com/',
                 'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8',
-                'Accept-Language': 'en-US,en;q=0.5',
             },
             'nocheckcertificate': True,
             'geo_bypass': True,
@@ -146,7 +143,6 @@ class SmartDownloader:
         if quality == 'audio':
             ydl_opts['format'] = 'bestaudio/best'
         else:
-            # دقة ذكية (هنا السر في عدم الحظر)
             ydl_opts['format'] = 'bestvideo[ext=mp4]+bestaudio[ext=m4a]/best[ext=mp4]/best'
 
         try:
@@ -155,6 +151,7 @@ class SmartDownloader:
             return True
         except Exception as e:
             return str(e)
+            
             
 
 # ==========================================
