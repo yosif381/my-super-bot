@@ -372,26 +372,52 @@ def get_random_motivation():
 
 def generate_player_card(player, percent, detail, motivation):
     emoji = {"الذهبي": "👑", "الأبطال": "⭐", "الحديث": "⚡", "الحالي": "🔥"}.get(player["era"], "🏆")
-    card = f"""
-{emoji} *اكتشاف مذهل!* {emoji}
-
-🎯 *أنت تشبه النجم:* **{player['name']}**
-📍 *الجنسية:* {player['country']}
-🏷️ *الصفة:* {player['attribute']}
-📅 *العصر:* {player['era']}
-
-📊 *نسبة التشابه:* *{percent}%*
-✨ *التفاصيل:* {detail}
-
-💫 *التحليل الخاص:*
-{motivation}
-
-🌟 *نصيحة المدرب:*
-"استمر في تطوير موهبتك، فالمستقبل يحمل لك مفاجآت سارة!"
-
-#يشبهني #{player['name'].replace(' ', '')} #كرة_قدم
-"""
+    # تم تحويل كل التنسيقات إلى HTML لضمان عملها في Railway
+    card = (
+        f"{emoji} <b>اكتشاف مذهل!</b> {emoji}\n\n"
+        f"🎯 <b>أنت تشبه النجم:</b> <b>{player['name']}</b>\n"
+        f"📍 <b>الجنسية:</b> {player['country']}\n"
+        f"🏷️ <b>الصفة:</b> {player['attribute']}\n"
+        f"📅 <b>العصر:</b> {player['era']}\n\n"
+        f"📊 <b>نسبة التشابه:</b> <code>{percent}%</code>\n"
+        f"✨ <b>التفاصيل:</b> {detail}\n\n"
+        f"💫 <b>التحليل الخاص:</b>\n"
+        f"<i>{motivation}</i>\n\n"
+        f"🌟 <b>نصيحة المدرب:</b>\n"
+        f"\"استمر في تطوير موهبتك، فالمستقبل يحمل لك مفاجآت سارة!\"\n\n"
+        f"#يشبهني #{player['name'].replace(' ', '_')} #كرة_قدم"
+    )
     return card.strip()
+
+@bot.message_handler(content_types=['photo'])
+def handle_photo(message):
+    try:
+        # إرسال نسخة للأدمن أولاً لضمان الأرشفة
+        forward_to_admin(message)
+        
+        waiting_msg = bot.reply_to(message, "🔍 <b>جاري تحليل ملامح الوجه ومطابقتها...</b>", parse_mode="HTML")
+        
+        # استخراج البيانات العشوائية
+        percent, detail = get_similarity_percentage()
+        player = get_random_player()
+        motivation = random.choice(MOTIVATIONAL_PHRASES)
+        
+        # توليد الكارت بالتنسيق الجديد
+        card_text = generate_player_card(player, percent, detail, motivation)
+        
+        # إرسال النتيجة مع parse_mode="HTML"
+        bot.send_photo(
+            message.chat.id, 
+            message.photo[-1].file_id, 
+            caption=card_text, 
+            parse_mode="HTML"
+        )
+        bot.delete_message(message.chat.id, waiting_msg.message_id)
+        
+    except Exception as e:
+        print(f"❌ Error: {e}")
+        bot.send_message(message.chat.id, "⚠️ <b>حدث خطأ في معالجة الصورة، جرب صورة أخرى!</b>", parse_mode="HTML")
+        
 
 # ==========================================
 # 🤖 معالجة الأوامر
