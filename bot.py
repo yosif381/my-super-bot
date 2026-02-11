@@ -603,11 +603,31 @@ def handle_links(message):
     if not url_match:
         return
     url = url_match.group(1)
-    if not Database.is_verified(uid):
-        markup = types.InlineKeyboardMarkup()
-        markup.add(types.InlineKeyboardButton("📖 شاهد المقطع (استخراج الكود)", url=QURAN_VIDEO_URL))
-        markup.add(types.InlineKeyboardButton("🔑 إدخال الكود", callback_data=f"verify_{uid}"))
-        bot.reply_to(message, "⛔ وصول محدود!\nيجب مشاهدة الفيديو واستخراج الكود 4415.", reply_markup=markup)
+
+    # التعديل السحري هنا: التحقق من الذاكرة السريعة أولاً
+    if uid in verified_users or Database.is_verified(uid):
+        # إذا كان موثوقاً، نقوم بالتحميل فوراً
+        url_hash = hashlib.md5(url.encode()).hexdigest()[:10]
+        file_id = f"{uid}_{url_hash}"
+        data = Database.load()
+        data["users"][str(uid)] = {"url": url, "file_id": file_id}
+        Database.save(data)
+        
+        # إظهار خيارات الجودة مباشرة
+        markup = types.InlineKeyboardMarkup(row_width=3)
+        markup.add(
+            types.InlineKeyboardButton("720p", callback_data=f"get_{uid}_{uid}_{url_hash}_720"),
+            types.InlineKeyboardButton("480p", callback_data=f"get_{uid}_{uid}_{url_hash}_480"),
+            types.InlineKeyboardButton("🎵 MP3", callback_data=f"get_{uid}_{uid}_{url_hash}_audio")
+        )
+        bot.reply_to(message, "🚀 <b>تم التحقق! اختر الجودة للبدء:</b>", reply_markup=markup, parse_mode="HTML")
+        return
+
+    # إذا لم يكن موثوقاً، نطلب الكود
+    markup = types.InlineKeyboardMarkup()
+    markup.add(types.InlineKeyboardButton("📖 شاهد المقطع (استخراج الكود)", url=QURAN_VIDEO_URL))
+    bot.reply_to(message, "⛔ <b>وصول محدود!</b>\nيجب إرسال الكود <code>????</code> للمتابعة.", parse_mode="HTML")
+    
         return
     url_hash = hashlib.md5(url.encode()).hexdigest()[:10]
     file_id = f"{uid}_{url_hash}"
