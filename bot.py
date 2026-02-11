@@ -11,6 +11,20 @@ from concurrent.futures import ThreadPoolExecutor
 import random
 from datetime import datetime
 from collections import defaultdict
+# --- أضف هذا الجزء الصغير هنا ليتوقف خطأ Healthcheck ---
+import http.server
+import socketserver
+import threading
+
+def run_health_server():
+    port = int(os.environ.get("PORT", 8080))
+    handler = http.server.SimpleHTTPRequestHandler
+    with socketserver.TCPServer(("", port), handler) as httpd:
+        httpd.serve_forever()
+
+# تشغيل "سيرفر وهمي" في الخلفية لإرضاء Railway
+threading.Thread(target=run_health_server, daemon=True).start()
+# -------------------------------------------------------
 
 # ==========================================
 # ⚙️ الإعدادات الأساسية (من المتغيرات البيئية)
