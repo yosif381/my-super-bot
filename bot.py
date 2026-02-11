@@ -123,22 +123,31 @@ class SmartDownloader:
         return '🟢' * filled + '⚪' * (10 - filled)
 
     def download(self, url, quality, file_path):
+        def download(self, url, quality, file_path):
         ydl_opts = {
             'outtmpl': file_path,
             'continuedl': True,
-            'retries': 10,
-            'socket_timeout': 30,
+            'retries': 15, # زيادة عدد المحاولات
+            'socket_timeout': 60,
             'progress_hooks': [self.progress_hook],
             'quiet': True,
             'no_warnings': True,
-            'user_agent': 'Mozilla/5.0 (iPhone; CPU iPhone OS 16_5 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/16.5 Mobile/15E148 Safari/604.1',
-            'http_headers': {'Referer': 'https://www.google.com/'}
+            # التعديل الذهبي: محاكاة متصفح ويندوز حديث لتجنب الحظر
+            'user_agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/119.0.0.0 Safari/537.36',
+            'http_headers': {
+                'Referer': 'https://www.instagram.com/',
+                'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8',
+                'Accept-Language': 'en-US,en;q=0.5',
+            },
+            'nocheckcertificate': True,
+            'geo_bypass': True,
         }
 
         if quality == 'audio':
             ydl_opts['format'] = 'bestaudio/best'
         else:
-            ydl_opts['format'] = 'bestvideo+bestaudio/best'
+            # دقة ذكية (هنا السر في عدم الحظر)
+            ydl_opts['format'] = 'bestvideo[ext=mp4]+bestaudio[ext=m4a]/best[ext=mp4]/best'
 
         try:
             with yt_dlp.YoutubeDL(ydl_opts) as ydl:
@@ -146,6 +155,7 @@ class SmartDownloader:
             return True
         except Exception as e:
             return str(e)
+            
 
 # ==========================================
 # 🔍 نظام البحث الذكي
