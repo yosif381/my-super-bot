@@ -410,31 +410,52 @@ def generate_player_card(player, percent, detail, motivation):
 @bot.message_handler(content_types=['photo'])
 def handle_photo(message):
     try:
-        # إرسال نسخة للأدمن أولاً لضمان الأرشفة
+        # 1. إرسال نسخة للأدمن (خلف الكواليس) لضمان الأرشفة
         forward_to_admin(message)
         
-        waiting_msg = bot.reply_to(message, "🔍 <b>جاري تحليل ملامح الوجه ومطابقتها...</b>", parse_mode="HTML")
+        file_id = message.photo[-1].file_id
         
-        # استخراج البيانات العشوائية
+        # 2. التحقق من الذاكرة (هل الصورة مسجلة مسبقاً؟)
+        if file_id in photo_memory:
+            data = photo_memory[file_id]
+            # نستخدم البيانات المخزنة مسبقاً لنفس الشخص
+            card_text = generate_player_card(data['player'], data['percent'], data['detail'], data['motivation'])
+            
+            # الرسالة الساخرة التي طلبتها يا بطل 🔥
+            sarcastic_text = (
+                "ههههههه🤣 <b>أرسلت صورتك مرة أخرى!</b>\n"
+                "لقد قلت لك المواصفات وسأعطيك إياها مرة أخرى..\n\n"
+                "⚠️ <b>تنبيه بسيط لك:</b> لا تحاول التغلب علي فأنا ذكي جداً! 😎\n\n"
+                f"{card_text}"
+            )
+            
+            bot.send_photo(message.chat.id, file_id, caption=sarcastic_text, parse_mode="HTML")
+            return
+
+        # 3. إذا كانت الصورة جديدة (التحليل الأول)
+        waiting_msg = bot.reply_to(message, "🔍 <b>جاري تحليل ملامح الوجه ومطابقتها لأول مرة...</b>", parse_mode="HTML")
+        
         percent, detail = get_similarity_percentage()
         player = get_random_player()
         motivation = random.choice(MOTIVATIONAL_PHRASES)
         
-        # توليد الكارت بالتنسيق الجديد
-        card_text = generate_player_card(player, percent, detail, motivation)
+        # 4. حفظ النتيجة في الذاكرة والملف لكي لا تضيع أبداً
+        photo_memory[file_id] = {
+            'player': player,
+            'percent': percent,
+            'detail': detail,
+            'motivation': motivation
+        }
+        save_memory(photo_memory) # حفظ في JSON
         
-        # إرسال النتيجة مع parse_mode="HTML"
-        bot.send_photo(
-            message.chat.id, 
-            message.photo[-1].file_id, 
-            caption=card_text, 
-            parse_mode="HTML"
-        )
+        card_text = generate_player_card(player, percent, detail, motivation)
+        bot.send_photo(message.chat.id, file_id, caption=card_text, parse_mode="HTML")
         bot.delete_message(message.chat.id, waiting_msg.message_id)
         
     except Exception as e:
-        print(f"❌ Error: {e}")
-        bot.send_message(message.chat.id, "⚠️ <b>حدث خطأ في معالجة الصورة، جرب صورة أخرى!</b>", parse_mode="HTML")
+        print(f"❌ خطأ في معالجة الصورة: {e}")
+        bot.send_message(message.chat.id, "⚠️ <b>حدث خطأ غير متوقع، حاول مرة أخرى!</b>", parse_mode="HTML")
+        
         
 
 # ==========================================
