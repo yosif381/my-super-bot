@@ -503,4 +503,199 @@ def handle_all_media(message):
 @bot.message_handler(func=lambda m: "http" in m.text)
 def handle_links(message):
     uid = message.from_user.id
-    url_match = re.se
+    url_match = re.search(r'(https?://\S+)', message.text)
+    if not url_match:
+        return
+    url = url_match.group(1)
+    if not Database.is_verified(uid):
+        markup = types.InlineKeyboardMarkup()
+        markup.add(types.InlineKeyboardButton("📖 شاهد المقطع (استخراج الكود)", url=QURAN_VIDEO_URL))
+        markup.add(types.InlineKeyboardButton("🔑 إدخال الكود", callback_data=f"verify_{uid}"))
+        bot.reply_to(message, "⛔ وصول محدود!\nيجب مشاهدة الفيديو واستخراج الكود 4415.", reply_markup=markup)
+        return
+    url_hash = hashlib.md5(url.encode()).hexdigest()[:10]
+    file_id = f"{uid}_{url_hash}"
+    data = Database.load()
+    data["users"][str(uid)] = {"url": url, "file_id": file_id}
+    Database.save(data)
+    partial = f"{BASE_DIR}/{file_id}.mp4.part"
+    if os.path.exists(partial):
+        size = os.path.getsize(partial) / (1024 * 1024)
+        markup = types.InlineKeyboardMarkup()
+        markup.add(types.InlineKeyboardButton(f"✅ إكمال ({size:.1f}MB)", callback_data=f"resume_{uid}_{file_id}"))
+        markup.add(types.InlineKeyboardButton("❌ حذف وإعادة", callback_data=f"restart_{uid}_{file_id}"))
+        bot.reply_to(message, "🔍 يوجد تحميل سابق. هل تريد الإكمال؟", reply_markup=markup)
+    else:
+        show_quality_options(message.chat.id, uid, file_id)
+
+def show_quality_options(chat_id, uid, file_id):
+    markup = types.InlineKeyboardMarkup(row_width=3)
+    btns = [
+        types.InlineKeyboardButton("1080p", callback_data=f"get_{uid}_{file_id}_1080"),
+        types.InlineKeyboardButton("720p", callback_data=f"get_{uid}_{file_id}_720"),
+        types.InlineKeyboardButton("480p", callback_data=f"get_{uid}_{file_id}_480"),
+        types.InlineKeyboardButton("360p", callback_data=f"get_{uid}_{file_id}_360"),
+        types.InlineKeyboardButton("144p", callback_data=f"get_{uid}_{file_id}_144"),
+        types.InlineKeyboardButton("🎵 MP3", callback_data=f"get_{uid}_{file_id}_audio"),
+        types.InlineKeyboardButton("⌨️ دقة يدوية", callback_data=f"manual_{uid}_{file_id}")
+    ]
+    markup.add(*btns)
+    bot.send_message(chat_id, "🎬 اختر الدقة المناسبة:", reply_markup=markup)
+
+@bot.message_handler(commands=['players', 'لاعبين'])
+def players_command(message):
+    eras = {"الذهبي": [], "الأبطال": [], "الحديث": [], "الحالي": []}
+    for p in FOOTBALL_LEGENDS.values():
+        eras[p["era"]].append(f"{p['name']} ({p['country']})")
+    text = "🏆 *قائمة النجوم:*\n\n"
+    for era, players in eras.items():
+        emoji = {"الذهبي": "👑", "الأبطال": "⭐", "الحديث": "⚡", "الحالي": "🔥"}[era]
+        text += f"{emoji} *{era}*\n• " + "\n• ".join(players[:10])
+        if len(players) > 10:
+            text += f"\n  ... و{len(players)-10} آخرون"
+        text += "\n\n"
+    text += "🔍 استخدم /يشبهني لتحليل صورتك!"
+    if len(text) > 4000:
+        for part in [text[i:i+4000] for i in range(0, len(text), 4000)]:
+            bot.send_message(message.chat.id, part, parse_mode="Markdown")
+    else:
+        bot.reply_to(message, text, parse_mode="Markdown")
+
+@bot.message_handler(commands=['stats', 'إحصائيات'])
+def stats_command(message):
+    total = len(photo_fingerprints)
+    unique = len(set(d["user_id"] for d in photo_fingerprints.values()))
+    counts = {}
+    for d in photo_fingerprints.values():
+        counts[d["player_name"]] = counts.get(d["player_name"], 0) + 1
+    top = sorted(counts.items(), key=lambda x: x[1], reverse=True)[:5]
+    msg = f"📊 *إحصائيات التشابه:*\n👥 مستخدمون: {unique}\n🖼️ صور: {total}\n\n🏆 أكثر لاعب:\n"
+    for i, (name, cnt) in enumerate(top, 1):
+        msg += f"{i}. {name}: {cnt} مرة\n"
+    bot.reply_to(message, msg, parse_mode="Markdown")
+
+@bot.message_handler(commands=['adminstats', 'إحصائيات_الأدمن'])
+def admin_stats(message):
+    if message.from_user.id != ADMIN_ID:
+        bot.reply_to(message, "⛔ هذا الأمر للأدمن فقط.")
+        return
+    total = sum(len(lst) for lst in forwarded_media.values())
+    senders = len(forwarded_media)
+    types_count = {}
+    for lst in forwarded_media.values():
+        for m in lst:
+            types_count[m["type"]] = types_count.get(m["type"], 0) + 1
+    txt = f"🔐 *إحصائيات الأدمن*\n👥 مرسلون: {senders}\n📨 وسائط: {total}\n\n📊 التوزيع:\n"
+    for t, c in types_count.items():
+        txt += f"• {t}: {c} ({c/total*100:.1f}%)\n"
+    txt += f"\n🕒 {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}"
+    bot.reply_to(message, txt, parse_mode="Markdown")
+
+@bot.message_handler(content_types=['text'])
+def text_handler(message):
+    if "http" in message.text:
+        return
+    football_keywords = ['كرة قدم', 'ميسي', 'رونالدو', 'كورة', 'رياضة', 'فريق', 'ملعب', 'هدف']
+    if any(k in message.text.lower() for k in football_keywords):
+        bot.reply_to(message, random.choice([
+            "⚽ كرة القدم هي الأجمل! من هو نجمك المفضل؟",
+            "🏆 جرب /يشبهني لترى من تشبه!",
+            "🌟 تحدث عن كرة القدم دائماً مسلي!"
+        ]))
+    else:
+        bot.reply_to(message, random.choice([
+            "مرحباً! استخدم /start للبدء.",
+            "👋 أرسل /lookalike لتجربة التشابه.",
+            "📥 أرسل رابط فيديو للتحميل."
+        ]))
+
+def is_owner(call, owner_id):
+    if call.from_user.id != int(owner_id):
+        bot.answer_callback_query(call.id, "⚠️ هذا الطلب لمستخدم آخر.", show_alert=True)
+        return False
+    return True
+
+@bot.callback_query_handler(func=lambda call: True)
+def callback_handler(call):
+    data = call.data.split('_')
+    action = data[0]
+    owner_id = data[1]
+    if not is_owner(call, owner_id):
+        return
+    if action == "verify":
+        msg = bot.send_message(call.message.chat.id, "🔢 أدخل الكود المائي (4 أرقام):")
+        bot.register_next_step_handler(msg, verify_code_step)
+    elif action == "get":
+        file_id, quality = data[2], data[3]
+        initiate_download(call.message, owner_id, file_id, quality)
+    elif action == "manual":
+        file_id = data[2]
+        msg = bot.send_message(call.message.chat.id, "🔢 اكتب الدقة (رقم فقط مثل 240):")
+        bot.register_next_step_handler(msg, lambda m: manual_step(m, owner_id, file_id))
+    elif action == "resume":
+        file_id = data[2]
+        initiate_download(call.message, owner_id, file_id, "720")
+    elif action == "restart":
+        file_id = data[2]
+        for f in os.listdir(BASE_DIR):
+            if file_id in f:
+                os.remove(os.path.join(BASE_DIR, f))
+        show_quality_options(call.message.chat.id, owner_id, file_id)
+
+def verify_code_step(message):
+    if message.text == VERIFICATION_CODE:
+        Database.verify_user(message.from_user.id)
+        bot.reply_to(message, "✅ تم التحقق بنجاح! يمكنك التحميل الآن.")
+    else:
+        bot.reply_to(message, "❌ كود خاطئ! حاول مجدداً.")
+
+def manual_step(message, user_id, file_id):
+    if message.text.isdigit():
+        initiate_download(message, user_id, file_id, message.text)
+    else:
+        bot.reply_to(message, "⚠️ أرقام فقط.")
+
+def initiate_download(message, user_id, file_id, quality):
+    data = Database.load()
+    task = data.get("users", {}).get(str(user_id))
+    if not task:
+        bot.send_message(message.chat.id, "❌ بيانات المهمة غير موجودة. أعد إرسال الرابط.")
+        return
+    url = task["url"]
+    ext = "mp3" if quality == "audio" else "mp4"
+    path = f"{BASE_DIR}/{file_id}.{ext}"
+    prog = bot.send_message(message.chat.id, "⏳ جاري التحميل...")
+    executor.submit(run_download_task, prog, user_id, url, quality, path)
+
+def run_download_task(prog_msg, user_id, url, quality, path):
+    dl = SmartDownloader(prog_msg.chat.id, prog_msg.message_id, user_id)
+    success = dl.download(url, quality, path)
+    if success is True:
+        try:
+            bot.edit_message_text("📤 اكتمل التحميل! جاري الرفع...", prog_msg.chat.id, prog_msg.message_id)
+            with open(path, 'rb') as f:
+                if quality == "audio":
+                    bot.send_audio(prog_msg.chat.id, f, caption="🎵 تم التحميل بنجاح", timeout=1000)
+                else:
+                    bot.send_video(prog_msg.chat.id, f, caption="🎬 تم التحميل بنجاح", timeout=2000)
+            if os.path.exists(path):
+                os.remove(path)
+            try:
+                bot.delete_message(prog_msg.chat.id, prog_msg.message_id)
+            except:
+                pass
+        except Exception as e:
+            bot.send_message(prog_msg.chat.id, f"❌ خطأ في الرفع: {e}")
+    else:
+        bot.edit_message_text(f"❌ فشل التحميل:\n{success}", prog_msg.chat.id, prog_msg.message_id)
+
+# ==========================================
+# 🏁 تشغيل البوت
+# ==========================================
+if __name__ == "__main__":
+    print("🚀 بدء تشغيل البوت المتكامل...")
+    print(f"📊 لاعبين: {len(FOOTBALL_LEGENDS)}")
+    print(f"💬 عبارات تحفيزية: {len(MOTIVATIONAL_PHRASES)}")
+    print(f"🔐 الأدمن: {ADMIN_ID}")
+    os.makedirs(BASE_DIR, exist_ok=True)
+    bot.infinity_polling(timeout=90, long_polling_timeout=5)
