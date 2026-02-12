@@ -605,15 +605,21 @@ def handle_links(message):
         return
     url = url_match.group(1)
 
-    # التحقق: هل المستخدم موثق في الذاكرة أو قاعدة البيانات؟
+    # 1. التحقق من صلاحية المستخدم (الكود 4415)
     if uid in verified_users or Database.is_verified(uid):
         url_hash = hashlib.md5(url.encode()).hexdigest()[:10]
         file_id = f"{uid}_{url_hash}"
+        
+        # 2. تحميل قاعدة البيانات وإصلاح نقص المفاتيح (حل KeyError)
         data = Database.load()
+        if "users" not in data:
+            data["users"] = {}  # إنشاء قاموس المستخدمين إذا لم يكن موجوداً
+        
+        # حفظ بيانات الرابط الحالي
         data["users"][str(uid)] = {"url": url, "file_id": file_id}
         Database.save(data)
         
-        # إذا كان هناك ملف جزئي، نعرض خيار الإكمال
+        # 3. التحقق من وجود ملف جزئي (إكمال التحميل)
         partial = f"{BASE_DIR}/{file_id}.mp4.part"
         if os.path.exists(partial):
             size = os.path.getsize(partial) / (1024 * 1024)
@@ -622,13 +628,15 @@ def handle_links(message):
             markup.add(types.InlineKeyboardButton("❌ حذف وإعادة", callback_data=f"restart_{uid}_{file_id}"))
             bot.reply_to(message, "🔍 <b>يوجد تحميل سابق.. هل تريد الإكمال؟</b>", reply_markup=markup, parse_mode="HTML")
         else:
+            # 4. إذا لم يوجد تحميل سابق، اظهر خيارات الجودة فوراً
             show_quality_options(message.chat.id, uid, file_id)
+            
     else:
-        # إذا لم يكن موثقاً، نطلب الكود
+        # 5. إذا لم يكن المستخدم موثقاً، نطلب منه الكود
         markup = types.InlineKeyboardMarkup()
         markup.add(types.InlineKeyboardButton("📖 شاهد المقطع (استخراج الكود)", url=QURAN_VIDEO_URL))
         bot.reply_to(message, "⛔ <b>وصول محدود!</b>\nيجب إرسال الكود <code>4415</code> للمتابعة.", reply_markup=markup, parse_mode="HTML")
-
+        
 # 2. دالة استقبال الكود وتفعيل الحساب
 @bot.message_handler(func=lambda message: message.text == "4415")
 def verify_success(message):
